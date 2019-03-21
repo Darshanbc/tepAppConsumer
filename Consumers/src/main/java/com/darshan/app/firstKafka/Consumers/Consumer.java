@@ -22,7 +22,7 @@ import com.mongodb.client.MongoDatabase;
 import org.json.simple.parser.JSONParser;
 /**
  * Hello world!
- *
+ *l
  */
 public class Consumer {
 	 Logger logger = LoggerFactory.getLogger(Consumer.class.getName());
