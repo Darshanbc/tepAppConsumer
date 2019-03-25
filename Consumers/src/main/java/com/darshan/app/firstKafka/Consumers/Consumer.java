@@ -29,38 +29,38 @@ public class Consumer {
     	new ConsumerProcess().processRecord();
     }
 }
-class Dbops{
-	String  USER_ID="admin";
-	String PASSWORD="Password123";
-
-	 public void run(String jsonObj) {
-		  // Creating a Mongo client 
-	      MongoClient mongo = new MongoClient( "localhost" , 27017 ); 
-	   
-	      // Creating Credentials 
-//	      MongoCredential credential; 
-//	      credential = MongoCredential.createCredential(USER_ID, "myDb", 
-//	         PASSWORD.toCharArray()); 
-	      System.out.println("Connected to the database successfully");  
-	      
-	      // Accessing the database 
-	      MongoDatabase database = mongo.getDatabase("myDb"); 
-//	      System.out.println("Credentials ::"+ credential);    
-	      MongoCollection<Document> collection= database.getCollection("testCollection");
-	      Document doc = Document.parse(jsonObj);
-//	      DBObject dbObject = (DBObject)JSON.parse(jsonObj);
-//	      Document document = new Document("title", "MongoDB") 
-//	    	      .append("id", 1)
-//	    	      .append("description", "database") 
-//	    	      .append("likes", 100) 
-//	    	      .append("url", "http://www.tutorialspoint.com/mongodb/") 
-//	    	      .append("by", "tutorials point");  
-//	    collection.up  (doc); 
-//	      collection.find
-	    mongo.close();
-	      System.out.println("Document Inserted successfully");
-	 }  
-}
+//class Dbops{
+//	String  USER_ID="admin";
+//	String PASSWORD="Password123";
+//
+//	 public void run(String jsonObj) {
+//		  // Creating a Mongo client 
+//	      MongoClient mongo = new MongoClient( "localhost" , 27017 ); 
+//	   
+//	      // Creating Credentials 
+////	      MongoCredential credential; 
+////	      credential = MongoCredential.createCredential(USER_ID, "myDb", 
+////	         PASSWORD.toCharArray()); 
+//	      System.out.println("Connected to the database successfully");  
+//	      
+//	      // Accessing the database 
+//	      MongoDatabase database = mongo.getDatabase("myDb"); 
+////	      System.out.println("Credentials ::"+ credential);    
+//	      MongoCollection<Document> collection= database.getCollection("testCollection");
+//	      Document doc = Document.parse(jsonObj);
+////	      DBObject dbObject = (DBObject)JSON.parse(jsonObj);
+////	      Document document = new Document("title", "MongoDB") 
+////	    	      .append("id", 1)
+////	    	      .append("description", "database") 
+////	    	      .append("likes", 100) 
+////	    	      .append("url", "http://www.tutorialspoint.com/mongodb/") 
+////	    	      .append("by", "tutorials point");  
+////	    collection.up  (doc); 
+////	      collection.find
+//	    mongo.close();
+//	      System.out.println("Document Inserted successfully");
+//	 }  
+//}
 
 class ConsumerProcess{
 	public ConsumerProcess() {};
@@ -106,17 +106,7 @@ class ConsumerProcess{
 	    }
 	}
 	
-	public JSONObject jsonParser(String jsonString) {
-		JSONParser parser = new JSONParser();
-		JSONObject json = null;
-		try {
-			json = (JSONObject) parser.parse(jsonString);
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return json;
-	}
+	
 }
 
 

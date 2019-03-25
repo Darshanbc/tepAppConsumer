@@ -1,12 +1,15 @@
 package com.darshan.app.firstKafka.Consumers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.bson.Document;
 import org.json.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -60,24 +63,29 @@ public class DBOps implements Runnable{
 			String value=record.value();
 			System.out.println("Is record empty?: "+value.isEmpty());
 			System.out.println("Record Value"+value);
-			try {
-				JSONObject obj = new JSONObject(value);
-				Document document= Document.parse(obj.toString());
-				String tripId=document.getString(TRIP_ID);
-				System.out.println("Trip Id: "+tripId);
-				String hash=cryptoOps.getMd5(record.value());
-				System.out.println("hash of Data"+hash);
-				this.redisClient.setValue(hash);
-				if(!this.redisClient.isValueExists(tripId)) {
-					this.redisClient.insertValue(tripId);
-					list.add(document);
-				}
-				if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
-					redisClient.deleteAllRecord(tripId);
-				}
-			}catch(Exception err) {
-				System.out.println(err.toString());
-			}
+//			HashMap<String, Object> status =new JSONUtils().isJSONValid(value);
+//			System.out.println("Status:"+status);
+			Document doc= Document.parse(value);
+//			doc.putAll(status);
+//			try {
+//				JSONObject obj =jsonParser(value);
+//				
+//				Document document= Document.parse(obj.toString());
+//				String tripId=document.getString(TRIP_ID);
+//				System.out.println("Trip Id: "+tripId);
+//				String hash=cryptoOps.getMd5(record.value());
+//				System.out.println("hash of Data"+hash);
+//				this.redisClient.setValue(hash);
+//				if(!this.redisClient.isValueExists(tripId)) {
+//					this.redisClient.insertValue(tripId);
+					list.add(doc);
+//				}
+//				if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
+//					redisClient.deleteAllRecord(tripId);
+//				}
+//			}catch(Exception err) {
+//				System.out.println(err.toString());
+//			}
 			
 //			String json=gson.toJson(record.value());
 //			BasicDBObject dbo = getDBObject(record.value());
@@ -88,7 +96,7 @@ public class DBOps implements Runnable{
 			
 		}
 			this.collection.insertMany(list);   
-
+//			this.collection.insertOne(doc);
 			return;
 }
 	public BasicDBObject getDBObject(String data) {
@@ -102,5 +110,18 @@ public class DBOps implements Runnable{
 	{
 	   if(doc == null) return null;
 	   return new Document(doc.toMap());
+	}
+	public JSONObject jsonParser(String jsonString) {
+		JSONParser parser = new JSONParser();
+		JSONObject json = null;
+		try {
+			json = (JSONObject) parser.parse(jsonString);
+		
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return json;
+		
 	}
 }
