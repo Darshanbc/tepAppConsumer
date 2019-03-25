@@ -14,10 +14,10 @@ public class RedisClient {
 	
 	
 
-	private String getValue() {
+	public String getValue() {
 		return value;
 	}
-	private void setValue(String value) {
+	public void setValue(String value) {
 		this.value = value;
 	}
 	
@@ -48,5 +48,7 @@ public class RedisClient {
 	public void insertValue(String key) {
 		this.jedis.sadd(key, this.getValue());
 	}
-
+	public void deleteAllRecord(String key) {
+		jedis.del(key);
+	}
 }

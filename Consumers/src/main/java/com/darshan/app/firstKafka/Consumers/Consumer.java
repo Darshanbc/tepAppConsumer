@@ -5,21 +5,18 @@ import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.bson.Document;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.json.simple.parser.JSONParser;
 /**
  * Hello world!
  *l
@@ -91,10 +88,16 @@ class ConsumerProcess{
 //	        	  System.out.println("subscribing ")
 	            @SuppressWarnings({ "deprecation", "unchecked" })
 				ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
-	            for (ConsumerRecord<String, String> record : records) {
-	            	System.out.print("Partition= "+record.partition()+", key ="+record.key()+", value = "+record.value()+"\n");
-	            new Dbops().run(record.value());
-	        }
+	            if (records.count()>0) {
+	            	System.out.println("No. of Records"+records.count());
+	            	Runnable r=	new DBOps(records);
+	 	           new Thread(r).start(); 	
+	            }
+	           
+//	            for (ConsumerRecord<String, String> record : records) {
+//	            	System.out.print("Partition= "+record.partition()+", key ="+record.key()+", value = "+record.value()+"\n");
+//	            new Dbops().run(record.value());
+//	        }
 	        }
 	    } catch (Exception e) {
 	        System.out.println(e.toString());
