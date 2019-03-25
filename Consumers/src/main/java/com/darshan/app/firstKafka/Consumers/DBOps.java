@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.bson.Document;
+import org.json.JSONObject;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -56,24 +57,35 @@ public class DBOps implements Runnable{
 		
 		List<Document> list =new ArrayList<Document>();
 		for (ConsumerRecord<String, String> record : this.records) {
-			System.out.println("record value: "+record.value());
-//			
-//			String json=gson.toJson(record.value());
-			BasicDBObject dbo = getDBObject(record.value());
-			Document document= new Document(dbo);//getDocument(json);
-			String tripId=document.getString(TRIP_ID);
-			System.out.println("Trip Id: "+tripId);
-			String hash=cryptoOps.getMd5(record.value());
-			System.out.println("hash of Data"+hash);
-			this.redisClient.setValue(hash);
+			String value=record.value();
+			System.out.println("Is record empty?: "+value.isEmpty());
+			System.out.println("Record Value"+value);
+			try {
+				JSONObject obj = new JSONObject(value);
+				Document document= Document.parse(obj.toString());
+				String tripId=document.getString(TRIP_ID);
+				System.out.println("Trip Id: "+tripId);
+				String hash=cryptoOps.getMd5(record.value());
+				System.out.println("hash of Data"+hash);
+				this.redisClient.setValue(hash);
+				if(!this.redisClient.isValueExists(tripId)) {
+					this.redisClient.insertValue(tripId);
+					list.add(document);
+				}
+				if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
+					redisClient.deleteAllRecord(tripId);
+				}
+			}catch(Exception err) {
+				System.out.println(err.toString());
+			}
 			
-			if(!this.redisClient.isValueExists(tripId)) {
-				this.redisClient.insertValue(tripId);
-				list.add(document);
-			}
-			if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
-				redisClient.deleteAllRecord(tripId);
-			}
+//			String json=gson.toJson(record.value());
+//			BasicDBObject dbo = getDBObject(record.value());
+//			BasicDBObject dbo= (BasicDBObject)JSON.parse(obj.toString());
+			//(dbo);//getDocument(json);
+
+			
+			
 		}
 			this.collection.insertMany(list);   
 

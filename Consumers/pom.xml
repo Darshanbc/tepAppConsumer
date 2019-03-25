@@ -55,16 +55,16 @@
     <artifactId>jedis</artifactId>
     <version>3.0.1</version>
 </dependency>
-
-   
-  </dependencies>
-  <dependencyManagement>
-  	<dependencies>
   		<dependency>
   			<groupId>org.json</groupId>
   			<artifactId>json</artifactId>
   			<version>20180813</version>
   		</dependency>
+   
+  </dependencies>
+  <dependencyManagement>
+  	<dependencies>
+
   	</dependencies>
   </dependencyManagement>
 </project>
