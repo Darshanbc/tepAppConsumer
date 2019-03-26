@@ -1,7 +1,6 @@
 package com.darshan.app.firstKafka.Consumers;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -11,6 +10,8 @@ import org.json.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
@@ -61,24 +62,44 @@ public class DBOps implements Runnable{
 		List<Document> list =new ArrayList<Document>();
 		for (ConsumerRecord<String, String> record : this.records) {
 			String value=record.value();
-			System.out.println("Is record empty?: "+value.isEmpty());
-			System.out.println("Record Value"+value);
+//			System.out.println("Is record empty?: "+value.isEmpty());
+//			System.out.println("Record Value:"+value);
+			JsonParser jsonParser=new JsonParser();
+			JsonElement json=null;
+			try {
+				json = jsonParser.parse(value);
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+			
+//			System.out.println(json);
+			
 //			HashMap<String, Object> status =new JSONUtils().isJSONValid(value);
 //			System.out.println("Status:"+status);
-			Document doc= Document.parse(value);
+			Document document= Document.parse(json.getAsString());
+//			System.out.println("document created"+doc);
 //			doc.putAll(status);
 //			try {
 //				JSONObject obj =jsonParser(value);
 //				
 //				Document document= Document.parse(obj.toString());
-//				String tripId=document.getString(TRIP_ID);
+			String tripId = null;
+			try {
+				tripId=document.getString(TRIP_ID);
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+				
+			}
+				;
 //				System.out.println("Trip Id: "+tripId);
-//				String hash=cryptoOps.getMd5(record.value());
-//				System.out.println("hash of Data"+hash);
-//				this.redisClient.setValue(hash);
-//				if(!this.redisClient.isValueExists(tripId)) {
-//					this.redisClient.insertValue(tripId);
-					list.add(doc);
+				String hash=cryptoOps.getMd5(record.value());
+				System.out.println ("hash of Data"+hash);
+				this.redisClient.setValue(hash);
+				if(!this.redisClient.isValueExists(tripId)) {
+					this.redisClient.insertValue(tripId);
+					list.add(document);
 //				}
 //				if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
 //					redisClient.deleteAllRecord(tripId);
@@ -95,9 +116,10 @@ public class DBOps implements Runnable{
 			
 			
 		}
-			this.collection.insertMany(list);   
+			this.collection.insertMany(list); 
+			System.out.println("inserted to db");
 //			this.collection.insertOne(doc);
-			return;
+			return;}
 }
 	public BasicDBObject getDBObject(String data) {
 		if (data==null){
@@ -111,17 +133,17 @@ public class DBOps implements Runnable{
 	   if(doc == null) return null;
 	   return new Document(doc.toMap());
 	}
-	public JSONObject jsonParser(String jsonString) {
-		JSONParser parser = new JSONParser();
-		JSONObject json = null;
-		try {
-			json = (JSONObject) parser.parse(jsonString);
-		
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return json;
-		
-	}
+//	public JSONObject jsonParser(String jsonString) {
+//		JSONParser parser = new JSONParser();
+//		JSONObject json = null;
+//		try {
+//			json = (JSONObject) parser.parse(jsonString);
+//		
+//		} catch (ParseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		return json;
+//		
+//	}
 }

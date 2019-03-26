@@ -66,7 +66,7 @@ class ConsumerProcess{
 	public ConsumerProcess() {};
 	public void processRecord() {
 		Properties props = new Properties();
-	    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "18.218.96.99:9092");
+	    props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
 	    props.put("acks", "all");
 	    props.put("retries", 0);
 	    props.put("batch.size", 16384);
