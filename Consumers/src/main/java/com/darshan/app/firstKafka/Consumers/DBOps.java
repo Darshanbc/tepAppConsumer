@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.bson.Document;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -26,11 +26,15 @@ public class DBOps implements Runnable{
 	private static final String HOST="localhost";
 	private static final int PORT=27017;
 	private static final String  DATABASE="myDb";
-	private static final String COLLECTION="testCollection";
+	private static final String COLLECTION_TESTCOLLECTION="testCollection";
+	private static final String COLLECTION_DATAPOOL="dataPool";
+	private static final String COLLECTION_USERDATA="userData";
 	private static final String TRIP_ID="tripId";
 	private static final String DRIVE_STATUS="DriveStatus";
 	private static final String END_TRIP="END_TRIP";
-	
+	private static final String TOPIC_TESTCOLLECTION="testCollection";
+	private static final String TOPIC_DATAPOOL="dataPool";
+	private static final String TOPIC_USERDATA="userData";
 	static List<Document> list =new ArrayList<Document>(); 
 	private ConsumerRecords<String, String> records;
 			MongoClient mongo;
@@ -38,7 +42,37 @@ public class DBOps implements Runnable{
 			MongoCollection<Document> collection;
 			RedisClient redisClient;
 			CryptoOps cryptoOps;
-			
+			String topic;
+			String redisValue;
+
+
+	//------------------------------------Constructor------------------------------------
+	public DBOps(ConsumerRecords<String, String> records,String topic) {
+		setRecords(records);
+		setTopic(topic);
+		mongo = new MongoClient(HOST,PORT); 
+		database = mongo.getDatabase(DATABASE);
+		if (topic==TOPIC_USERDATA) {
+			collection= database.getCollection(COLLECTION_USERDATA);
+		}else if(topic==TOPIC_DATAPOOL) {
+			collection=database.getCollection(COLLECTION_DATAPOOL);
+		}else {
+			collection=database.getCollection(COLLECTION_TESTCOLLECTION);
+		}
+		this.redisClient= new RedisClient();
+		this.cryptoOps= new CryptoOps();
+		
+	}
+	//------------------------------getters and setters----------------------------------------	
+	private String getTopic() {
+		return topic;
+	}
+
+
+	private void setTopic(String topic) {
+		this.topic = topic;
+	}
+
 	private ConsumerRecords<String, String> getRecords() {
 		return records;
 	}
@@ -47,92 +81,77 @@ public class DBOps implements Runnable{
 		this.records = records;
 	}
 	
-	public DBOps(ConsumerRecords<String, String> records) {
-		setRecords(records);
-		mongo = new MongoClient(HOST,PORT); 
-		database = mongo.getDatabase(DATABASE);
-		collection= database.getCollection(COLLECTION);
-		this.redisClient= new RedisClient();
-		this.cryptoOps= new CryptoOps();
-		
+	private String getRedisValue() {
+		return redisValue;
 	}
-	
+
+	private void setRedisValue(String redisValue) {
+		this.redisValue = redisValue;
+	}
+
+	//---------------------------------run() for thread ----------------------------------
 	public void run() {
 		
 		List<Document> list =new ArrayList<Document>();
-		for (ConsumerRecord<String, String> record : this.records) {
+		String tripId = null;
+		
+		for (ConsumerRecord<String, String> record : getRecords()) {
 			String value=record.value();
-//			System.out.println("Is record empty?: "+value.isEmpty());
-//			System.out.println("Record Value:"+value);
-			JsonParser jsonParser=new JsonParser();
-			JsonElement json=null;
-			try {
-				json = jsonParser.parse(value);
-			} catch (Exception e) {
-				// TODO: handle exception
-				e.printStackTrace();
-			}
+			value=value.replace("\\", "");
+			value=value.substring(1, value.length()-1);
+			Document document= Document.parse(value);
+			System.out.println("Doscument"+document);
 			
-//			System.out.println(json);
-			
-//			HashMap<String, Object> status =new JSONUtils().isJSONValid(value);
-//			System.out.println("Status:"+status);
-			Document document= Document.parse(json.getAsString());
-//			System.out.println("document created"+doc);
-//			doc.putAll(status);
-//			try {
-//				JSONObject obj =jsonParser(value);
-//				
-//				Document document= Document.parse(obj.toString());
-			String tripId = null;
-			try {
-				tripId=document.getString(TRIP_ID);
-			} catch (Exception e) {
-				// TODO: handle exception
-				e.printStackTrace();
-				
-			}
-				;
-//				System.out.println("Trip Id: "+tripId);
-				String hash=cryptoOps.getMd5(record.value());
-				System.out.println ("hash of Data"+hash);
+			if(getTopic()==TOPIC_DATAPOOL) {
+				String hash=cryptoOps.getMd5(record.value()); //hash created
+				System.out.println ("hash of Data"+hash);// printing hash
 				this.redisClient.setValue(hash);
-				if(!this.redisClient.isValueExists(tripId)) {
-					this.redisClient.insertValue(tripId);
-					list.add(document);
-//				}
-//				if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
-//					redisClient.deleteAllRecord(tripId);
-//				}
-//			}catch(Exception err) {
-//				System.out.println(err.toString());
-//			}
-			
-//			String json=gson.toJson(record.value());
-//			BasicDBObject dbo = getDBObject(record.value());
-//			BasicDBObject dbo= (BasicDBObject)JSON.parse(obj.toString());
-			//(dbo);//getDocument(json);
 
-			
-			
-		}
+				try {
+					tripId=document.getString(TRIP_ID);
+					setRedisValue(tripId);
+				} catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();	
+				}
+				
+					if(!this.redisClient.isValueExists(getRedisValue())) {
+						System.out.println("value doesn't exist");
+						this.redisClient.insertValue(tripId);
+						list.add(document);
+					}else if(getTopic()==TOPIC_USERDATA) {
+//						System.out.println("value already exist");
+						document.append("tripID",0);
+						list.add(document);
+					}else {
+						System.out.println(record.value());
+					}
+				
+				}
+				if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
+					redisClient.deleteAllRecord(tripId);
+				}
+
 			this.collection.insertMany(list); 
 			System.out.println("inserted to db");
 //			this.collection.insertOne(doc);
-			return;}
-}
-	public BasicDBObject getDBObject(String data) {
-		if (data==null){
-			return null;
-		}
-		return (BasicDBObject)JSON.parse(data); 
+			return;
+			}
+		
 	}
 	
-	public static Document getDocument(DBObject doc)
-	{
-	   if(doc == null) return null;
-	   return new Document(doc.toMap());
-	}
+//	public BasicDBObject getDBObject(String data) {
+//		if (data==null){
+//			return null;
+//		}
+//		return (BasicDBObject)JSON.parse(data); 
+//	}
+//	
+//	public static Document getDocument(DBObject doc)
+//	{
+//	   if(doc == null) return null;
+//	   return new Document(doc.toMap());
+//	}
 //	public JSONObject jsonParser(String jsonString) {
 //		JSONParser parser = new JSONParser();
 //		JSONObject json = null;
