@@ -6,18 +6,11 @@ import java.util.List;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.bson.Document;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.util.JSON;
+
 
 @SuppressWarnings("deprecation")
 public class DBOps implements Runnable{
@@ -100,7 +93,7 @@ public class DBOps implements Runnable{
 			value=value.replace("\\", "");
 			value=value.substring(1, value.length()-1);
 			Document document= Document.parse(value);
-			System.out.println("Doscument"+document);
+			System.out.println("Document"+document);
 			
 			if(getTopic()==TOPIC_DATAPOOL) {
 				String hash=cryptoOps.getMd5(record.value()); //hash created
@@ -119,26 +112,29 @@ public class DBOps implements Runnable{
 						System.out.println("value doesn't exist");
 						this.redisClient.insertValue(tripId);
 						list.add(document);
-					}else if(getTopic()==TOPIC_USERDATA) {
+					}
+					if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
+						redisClient.deleteAllRecord(tripId);
+					}
+			}else if(getTopic()==TOPIC_USERDATA) {
 //						System.out.println("value already exist");
 						document.append("tripID",0);
 						list.add(document);
-					}else {
-						System.out.println(record.value());
-					}
+			}else {
+				System.out.println(record.value());
+			}
 				
-				}
-				if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
-					redisClient.deleteAllRecord(tripId);
-				}
-
+		}
+				
+		if(list.size()>0) {
 			this.collection.insertMany(list); 
 			System.out.println("inserted to db");
+		}
 //			this.collection.insertOne(doc);
-			return;
-			}
-		
+		return;
 	}
+		
+}
 	
 //	public BasicDBObject getDBObject(String data) {
 //		if (data==null){
@@ -165,4 +161,4 @@ public class DBOps implements Runnable{
 //		return json;
 //		
 //	}
-}
+
