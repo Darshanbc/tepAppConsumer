@@ -55,13 +55,11 @@ class ConsumerProcess{
 	    KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(props);
 	    consumer.subscribe(Arrays.asList(topic));
 	  
-//	    int counter = 0;
+
 
 	    try {
-//	        consumer.subscribe(topics);
-//	    	Logger logger=new Consumer().logger;
+
 	        while (true) {
-//	        	  System.out.println("subscribing to topic "+getTopic());
 	            @SuppressWarnings({ "deprecation", "unchecked" })
 				ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
 	            if (records.count()>0) {
@@ -80,7 +78,3 @@ class ConsumerProcess{
 	
 }
 
-
-//for (ConsumerRecord<String, String> record : records) {
-//System.out.print("Partition= "+record.partition()+", key ="+record.key()+", value = "+record.value()+"\n");
-//new Dbops().run(record.value());

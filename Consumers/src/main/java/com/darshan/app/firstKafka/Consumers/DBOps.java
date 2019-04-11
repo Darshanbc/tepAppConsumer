@@ -26,7 +26,7 @@ public class DBOps implements Runnable{
 	private static final String DRIVE_STATUS="DriveStatus";
 	private static final String END_TRIP="END_TRIP";
 	private static final String TOPIC_TESTCOLLECTION="testCollection";
-	private static final String TOPIC_DATAPOOL="dataPool";
+	private static final String TOPIC_DATAPOOL="DataPool";
 	private static final String TOPIC_USERDATA="userData";
 	static List<Document> list =new ArrayList<Document>(); 
 	private ConsumerRecords<String, String> records;
@@ -41,7 +41,9 @@ public class DBOps implements Runnable{
 
 	//------------------------------------Constructor------------------------------------
 	public DBOps(ConsumerRecords<String, String> records,String topic) {
+		System.out.println("toipc: "+topic);
 		setRecords(records);
+		
 		setTopic(topic);
 		mongo = new MongoClient(HOST,PORT); 
 		database = mongo.getDatabase(DATABASE);
@@ -88,35 +90,36 @@ public class DBOps implements Runnable{
 		List<Document> list =new ArrayList<Document>();
 		String tripId = null;
 		
-		for (ConsumerRecord<String, String> record : getRecords()) {
+		for (ConsumerRecord<String, String> record : this.getRecords()) {
 			String value=record.value();
 			value=value.replace("\\", "");
 			value=value.substring(1, value.length()-1);
 			Document document= Document.parse(value);
-			System.out.println("Document"+document);
-			
-			if(getTopic()==TOPIC_DATAPOOL) {
+			System.out.println("Document: "+document);
+
+			if(this.getTopic()==TOPIC_DATAPOOL) {
 				String hash=cryptoOps.getMd5(record.value()); //hash created
 				System.out.println ("hash of Data"+hash);// printing hash
-				this.redisClient.setValue(hash);
-
+//				this.redisClient.setValue(hash);
+				
 				try {
-					tripId=document.getString(TRIP_ID);
-					setRedisValue(tripId);
+					tripId=document.getInteger(TRIP_ID).toString();
+					this.setRedisValue(tripId);
 				} catch (Exception e) {
 					// TODO: handle exception
 					e.printStackTrace();	
 				}
+				System.out.println("hash:"+hash);
+				System.out.println("tripId:"+tripId);
+				if (this.redisClient.insert(hash,tripId)==1) {
+					System.out.println("adding element to ");
+					list.add(document);
+				}
 				
-					if(!this.redisClient.isValueExists(getRedisValue())) {
-						System.out.println("value doesn't exist");
-						this.redisClient.insertValue(tripId);
-						list.add(document);
-					}
-					if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
-						redisClient.deleteAllRecord(tripId);
-					}
-			}else if(getTopic()==TOPIC_USERDATA) {
+//				if(document.getString(DRIVE_STATUS).toLowerCase().equals(END_TRIP.toLowerCase())){
+//					redisClient.deleteAllRecord(tripId);
+//				}
+			}else if(this.getTopic()==TOPIC_USERDATA) {
 //						System.out.println("value already exist");
 						document.append("tripID",0);
 						list.add(document);
@@ -130,35 +133,10 @@ public class DBOps implements Runnable{
 			this.collection.insertMany(list); 
 			System.out.println("inserted to db");
 		}
-//			this.collection.insertOne(doc);
 		return;
 	}
 		
 }
 	
-//	public BasicDBObject getDBObject(String data) {
-//		if (data==null){
-//			return null;
-//		}
-//		return (BasicDBObject)JSON.parse(data); 
-//	}
-//	
-//	public static Document getDocument(DBObject doc)
-//	{
-//	   if(doc == null) return null;
-//	   return new Document(doc.toMap());
-//	}
-//	public JSONObject jsonParser(String jsonString) {
-//		JSONParser parser = new JSONParser();
-//		JSONObject json = null;
-//		try {
-//			json = (JSONObject) parser.parse(jsonString);
-//		
-//		} catch (ParseException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		return json;
-//		
-//	}
+
 
