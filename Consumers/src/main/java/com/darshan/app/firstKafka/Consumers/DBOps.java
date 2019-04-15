@@ -92,8 +92,10 @@ public class DBOps implements Runnable{
 		
 		for (ConsumerRecord<String, String> record : this.getRecords()) {
 			String value=record.value();
+
 			value=value.replace("\\", "");
-			value=value.substring(1, value.length()-1);
+//			value=value.substring(1, value.length()-1);
+			collection.insertOne(new Document("key",value));
 			Document document= Document.parse(value);
 			System.out.println("Document: "+document);
 
