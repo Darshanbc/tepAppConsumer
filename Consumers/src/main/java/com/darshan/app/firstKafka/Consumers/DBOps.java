@@ -94,15 +94,14 @@ public class DBOps implements Runnable{
 			String value=record.value();
 
 			value=value.replace("\\", "");
-//			value=value.substring(1, value.length()-1);
-			collection.insertOne(new Document("key",value));
-			Document document= Document.parse(value);
+
+			Document document= Document.parse(value);                              
 			System.out.println("Document: "+document);
 
 			if(this.getTopic()==TOPIC_DATAPOOL) {
 				String hash=cryptoOps.getMd5(record.value()); //hash created
 				System.out.println ("hash of Data"+hash);// printing hash
-//				this.redisClient.setValue(hash);
+
 				
 				try {
 					tripId=document.getInteger(TRIP_ID).toString();
