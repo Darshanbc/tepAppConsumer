@@ -91,6 +91,7 @@ public class DBOps implements Runnable{
 		String tripId = null;
 		
 		for (ConsumerRecord<String, String> record : this.getRecords()) {
+			System.out.println(record.value());
 			String value=record.value();
 			value=value.replace("\\", "");
 			value=value.substring(1, value.length()-1);
