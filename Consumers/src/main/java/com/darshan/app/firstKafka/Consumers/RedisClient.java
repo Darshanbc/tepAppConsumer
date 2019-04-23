@@ -8,42 +8,26 @@ import redis.clients.jedis.Jedis;
 
 public class RedisClient {
 	
-	private static String JEDIS_HOST="localhost";
-//	private Jedis jedis;
-
-	
-	
-	
 	public RedisClient() {
-		Properties prop= new Properties();
-//		Jedis jedis=null;
-		try {
-			InputStream input = new FileInputStream("./config.properties");
-			prop.load(input);
-			JEDIS_HOST=prop.getProperty("JEDIS_HOST");
-//			jedis =this.createClient();
-		}catch(Exception e) {
-			System.out.println(e.toString());
-		}		
-	}
-	private Jedis createClient() {
-		return  new Jedis(JEDIS_HOST);
-		
+
 	}
 	
-	
+	@SuppressWarnings("unused")
 	public Long insert(String key, String value) {
 		System.out.println("key: "+key);
 		System.out.println("value: "+value);
 		Long result;
-		Jedis jedis= new Jedis("localhost",6379);
+		JSONUtils jsonutils = new JSONUtils();
+		@SuppressWarnings("resource")
+		Jedis jedis= new Jedis(jsonutils.getJEDIS_HOST(),6379);
+		System.out.println("jedis host: "+jsonutils.getJEDIS_HOST());
 		if (jedis==null) {
 			 System.out.println("jedis is null"); 
 		 }
 		try {
 			result =jedis.sadd(key,value);
 		}catch(Exception err) {
-			System.out.println("Exception occured");
+			System.out.println("Error string: "+err.toString());
 			result = (long) 0;
 		}
 		return result;
@@ -51,7 +35,7 @@ public class RedisClient {
 	
 	
 	public void deleteAllRecord(String key) {
-		Jedis jedis= new Jedis("localhost",6379);
+		Jedis jedis= new Jedis(new JSONUtils().JEDIS_HOST,6379);
 		jedis.del(key);
 	}
 	

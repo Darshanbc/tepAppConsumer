@@ -40,9 +40,10 @@ class ConsumerProcess{
 	};
 	
 	public void processRecord() {
-		
+		JSONUtils jsonutils=new JSONUtils();
 		Properties props = new Properties();
-	    props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
+		System.out.println(jsonutils.getKAFKA_BROKER());
+	    props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, jsonutils.getKAFKA_BROKER());
 	    props.put("acks", "all");
 	    props.put("retries", 0);
 	    props.put("batch.size", 16384);

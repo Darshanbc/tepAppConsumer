@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.bson.Document;
 
 import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
@@ -18,10 +19,10 @@ public class DBOps implements Runnable{
 	private static final String PASSWORD="Password123";
 	private static final String HOST="localhost";
 	private static final int PORT=27017;
-	private static final String  DATABASE="myDb";
+	private static final String  DATABASE="DataLake";
 	private static final String COLLECTION_TESTCOLLECTION="testCollection";
-	private static final String COLLECTION_DATAPOOL="dataPool";
-	private static final String COLLECTION_USERDATA="userData";
+	private static final String COLLECTION_DATAPOOL="trip_data";
+	private static final String COLLECTION_USERDATA="user_data";
 	private static final String TRIP_ID="tripId";
 	private static final String DRIVE_STATUS="DriveStatus";
 	private static final String END_TRIP="END_TRIP";
@@ -38,14 +39,15 @@ public class DBOps implements Runnable{
 			String topic;
 			String redisValue;
 
-
+			
 	//------------------------------------Constructor------------------------------------
 	public DBOps(ConsumerRecords<String, String> records,String topic) {
+		
 		System.out.println("toipc: "+topic);
 		setRecords(records);
-		
+		JSONUtils jsonutils= new JSONUtils();
 		setTopic(topic);
-		mongo = new MongoClient(HOST,PORT); 
+		mongo = new MongoClient(jsonutils.getMONGO_HOST(),jsonutils.getMONGO_PORT()); 
 		database = mongo.getDatabase(DATABASE);
 		if (topic==TOPIC_USERDATA) {
 			collection= database.getCollection(COLLECTION_USERDATA);
@@ -122,8 +124,7 @@ public class DBOps implements Runnable{
 //					redisClient.deleteAllRecord(tripId);
 //				}
 			}else if(this.getTopic()==TOPIC_USERDATA) {
-//						System.out.println("value already exist");
-						document.append("tripID",0);
+
 						list.add(document);
 			}else {
 				System.out.println(record.value());
